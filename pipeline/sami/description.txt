@@ -1,0 +1,4 @@
+This is a basic bitbucket pipeline script, It's worked with AWS Code deploy.
+Any one can contribute with it for further process.
+
+Thanks
