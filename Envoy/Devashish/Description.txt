@@ -1,0 +1,1 @@
+This is main Envoy YAML file for a sample microservice architecture.
