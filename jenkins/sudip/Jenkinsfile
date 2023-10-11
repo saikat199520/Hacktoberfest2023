@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+    //agent {label 'slave-node-label'} 
+    environment {
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub-cred-id')
+    }
+    stages { 
+        stage('SCM Checkout') {
+            steps{
+            git branch: 'main', url: 'https://github.com/aemdevopssudip/node_docker_jenkins-slave.git'    
+            }
+        }
+
+        stage('Build docker image') {
+            steps {  
+                sh 'docker build -t mynodeapp .'
+                sh 'docker tag mynodeapp aemdevopssudip/nodeapp:$BUILD_NUMBER'
+                sh 'docker tag mynodeapp aemdevopssudip/nodeapp:latest'
+            }
+        }
+        stage('login to dockerhub') {
+            steps{
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+        stage('push image') {
+            steps{
+                sh 'docker push aemdevopssudip/nodeapp:$BUILD_NUMBER'
+                sh 'docker push aemdevopssudip/nodeapp:latest'
+            }
+        }
+        
+        stage('Delete image') {
+          steps{
+              sh 'docker rmi aemdevopssudip/nodeapp:$BUILD_NUMBER aemdevopssudip/nodeapp:latest mynodeapp'
+          }
+      
+        }
+      
+        stage('Delete Existing Container') {
+            steps{
+                sh 'docker stop mynode-con'
+                sh 'docker rm mynode-con'
+          }
+        }
+      
+        stage('Run container') {
+            steps{
+                sh 'docker run -it -d --name mynode-con -p 8085:3000 aemdevopssudip/nodeapp:latest'
+          }
+        }
+}
+post {
+        always {
+            sh 'docker logout'
+        }
+    }
+}
